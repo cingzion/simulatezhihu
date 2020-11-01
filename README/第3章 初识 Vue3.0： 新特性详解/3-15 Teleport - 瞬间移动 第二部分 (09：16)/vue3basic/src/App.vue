@@ -1,111 +1,3 @@
-## 3-14 Teleport - 瞬间移动 第一部分 (05：47)
-
-- 遇到的问题
-```jsx
-    顶层组件----挂载--->顶层DOM节点
-        |
-        |
-        ⇣
-    各种子组件...        
-        |                   
-        X                    
-        |                   
-        ⇣          
-    Dialog组件 
-    
-
-    <div clas="foo">
-        <div class="foo">
-            <div>....</div>
-            <Dialog v-if="dialogOpen"/>
-        </div>
-    </div>
-```
-
-- Dialog 被包裹在其它组件之中，容易被干扰
-- 样式也在其它组件中，容易变得非常混乱
-    > 希望的解决方案
-    ```jsx
-        顶层组件----挂载--->顶层DOM节点
-            |
-            |
-            ⇣
-        各种子组件...       顶层另外一个DOM节点
-            |                   ↑
-            X                   |
-            |                  挂载
-            ⇣             ------↑
-        Dialog组件------↗
-    ```
-
-- 案例
-```jsx
-
-// index.html 页面
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <title><%= htmlWebpackPlugin.options.title %></title>
-  </head>
-  <body>
-    <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-    </noscript>
-    <div id="app"></div>
-    <div id="modal"></div>
-    <!-- built files will be auto injected -->
-  </body>
-</html>
-
-
-// Modal.vue 组件
-<template>
-    <!-- 
-        <div id="modal"></div>  补渲染的DOM
-        <teleport to="#modal"></teleport> 要渲染到的DOM的ID上为 modal名字上
-
-        teleport 瞬间移动的组件，vue3的特性，它有一个参数 to
-            to 就是想要把它渲染到哪个DOM上去, 
-            to="#modal" 这里的 #modal，就是要渲染到一个 dom元素有一个 id 为 modal 上去的元素上节点
-
-
-
-     -->
-    <teleport to="#modal">
-        <div id="center">
-            <h2>tis is a modal</h2>
-        </div>
-    </teleport>
-</template>
-
-<script lang="ts">
-
-import { defineComponent } from 'vue';
-export default defineComponent({
-
-});
-</script>
-
-<style scoped>
-    #center {
-        width: 200px;
-        height: 200px;
-        border: 2px solid black;
-        background: white;
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        margin-left: -100px;
-    }
-</style>
-
-
-
-// App.vue 组件
 <template>
   <div>
     <p>count: {{ count }}</p>
@@ -121,6 +13,9 @@ export default defineComponent({
 
     <h1>X: {{ x }}, Y: {{ y }}</h1>
 
+    <button @click="openModal"> open Modal </button>
+    <Modal :isOpen="modalIsOpen" @close-modal="onModalClose"> My Modal !!!!</Modal>
+
     <div>
       <h1>图片展示</h1>
       <h1 v-if="loading">Loading!...</h1>
@@ -128,7 +23,7 @@ export default defineComponent({
       <img v-if="loaded" :src="result[0].url" />
     </div>
     
-    <Modal />
+    
   </div>
 </template>
 
@@ -149,6 +44,7 @@ import {
 import { useMounsePosition, useMounsePositionReactive } from './hooks/useMounsePosition';
 import { useURLLoader } from './hooks/useURLLoader';
 import Modal from './components/Modal.vue';
+
 /**
  *  ref       初始数据
  *  computed  计算属性
@@ -315,6 +211,16 @@ export default defineComponent({
     // toRefs 使用响应式对象
     const refData = toRefs(data);
 
+    // 打开模态跨的操作
+    const modalIsOpen = ref(false);
+    const openModal = () => {
+      modalIsOpen.value = true;
+    }
+
+    const onModalClose = () => {
+        modalIsOpen.value = false;
+    }
+
     // const { result, loading, loaded } = useURLLoader<DogResult>(`https://dog.ceo/api/breeds/image/random`);
     const { result, loading, loaded } = useURLLoader<CatResult[]>(`https://api.thecatapi.com/v1/images/search?limit=1`);
     watch(result, () => {
@@ -322,10 +228,8 @@ export default defineComponent({
       if(result.value) {
         // console.log('vlaue', result.value.message);
         console.log('vlaue', result.value[0].url);
-        
       }
-      
-    })
+    });
 
     // 对象
     return {
@@ -336,7 +240,10 @@ export default defineComponent({
       y,
       result,
       loading,
-      loaded
+      loaded,
+      modalIsOpen,
+      openModal,
+      onModalClose,
 
     }
 
@@ -354,6 +261,3 @@ export default defineComponent({
   margin-top: 60px;
 }
 </style>
-
-```
-
