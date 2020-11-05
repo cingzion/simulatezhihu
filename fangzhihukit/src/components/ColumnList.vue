@@ -36,6 +36,8 @@ export default defineComponent({
         const columnList = computed(() => {
             return props.list.map(column => {
                 if(!column.avatar) {
+                    // 判断
+                    
                     column.avatar = require('@/assets/avatar.jpg')
                 }
 
